@@ -4,7 +4,7 @@
 
 ## Description
 
-This node generates a prompt based on an image. It allows you to add extra instructions for generation. It supports **Local Qwen2.5 / Local Qwen3 (Instruct/Thinking) / OpenAI compatible endpoints**, multi-GPU setups and CPU fallback.
+This node generates a prompt based on an image. It allows you to add extra instructions for generation. It supports **Local Qwen2.5-VL / Local Qwen3-VL (Instruct/Thinking) / OpenAI compatible endpoints**, multi-GPU setups and CPU fallback.
 
 The purpose of this node is to achieve the effect: "I want an image similar to this". 
 
