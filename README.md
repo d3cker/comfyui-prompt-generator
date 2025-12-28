@@ -74,7 +74,7 @@ On multi-GPU rigs, it's possible to run Ollama and bind it to a specific GPU or 
 
 Scenario constrains: 
 - The rig contains two GPUs 
-- ComfuUI uses GPU0 for image generation
+- ComfyUI uses GPU0 for image generation
 - Ollama uses GPU1 for image recognition and prompt generation
 
 ### Start Ollama server and bind it to GPU1
