@@ -4,7 +4,7 @@ import re
 from io import BytesIO
 from typing import Dict, Tuple
 
-#import gc
+import gc
 import numpy as np
 import torch
 from PIL import Image
@@ -61,18 +61,17 @@ def _parse_device_choice(device_choice: str) -> str:
     # "cuda:0 | NVIDIA ..." -> "cuda:0"
     return device_choice.split("|", 1)[0].strip()
 
-# I'll try to figure out how to remove model 
-# This one is not used at the moment
-#def _cuda_cleanup(device_index: int | None):
-#    gc.collect()
-#    if torch.cuda.is_available():
-#        if device_index is None:
-#            torch.cuda.empty_cache()
-#            torch.cuda.ipc_collect()
-#        else:
-#            with torch.cuda.device(device_index):
-#                torch.cuda.empty_cache()
-#                torch.cuda.ipc_collect()
+
+def _cuda_cleanup(device_index: int | None):
+    gc.collect()
+    if torch.cuda.is_available():
+        if device_index is None:
+            torch.cuda.empty_cache()
+            torch.cuda.ipc_collect()
+        else:
+            with torch.cuda.device(device_index):
+                torch.cuda.empty_cache()
+                torch.cuda.ipc_collect()
 
 
 def _resolve_model_family(model_id: str) -> str:
@@ -97,7 +96,7 @@ class QwenPromptFromImage:
     # Cache models per (model_id, quant_mode, device_str, dtype_str)
     _MODEL_CACHE: Dict[Tuple[str, str, str, str], object] = {}
     _PROC_CACHE: Dict[str, object] = {}
-    
+
     @classmethod
     def INPUT_TYPES(cls):
         default_system = (
@@ -141,6 +140,7 @@ class QwenPromptFromImage:
                 "max_new_tokens": ("INT", {"default": 2048, "min": 16, "max": 8192, "step": 1}),
                 "temperature": ("FLOAT", {"default": 0.2, "min": 0.0, "max": 2.0, "step": 0.05}),
                 "safe_quants": ([True, False], {"default": True}),
+                "unload_model": ([True, False], {"default": True}),
 
             },
             "optional": {
@@ -163,11 +163,9 @@ class QwenPromptFromImage:
                 "transformers is missing or too old. Install/upgrade transformers to a version that supports Qwen2.5-VL/Qwen3-VL"
             )
 
-        proc = self._PROC_CACHE.get(model_id)
-        if proc is None:
-            proc = AutoProcessor.from_pretrained(model_id)
-            self._PROC_CACHE[model_id] = proc
-        return proc
+        if self._PROC_CACHE.get(model_id) is None:
+            self._PROC_CACHE[model_id] = AutoProcessor.from_pretrained(model_id)
+        return self._PROC_CACHE[model_id]
 
     def _load_local_model(self, model_id: str, device_choice: str, quantization: str, flash_attention: str, safe_quants: bool):
         
@@ -254,22 +252,19 @@ class QwenPromptFromImage:
         # Make sure flash-atttn is installed 
         if flash_attention == "on":
             kwargs["attn_implementation"] = "flash_attention_2"
-        
-        
         # print(kwargs)
         # Load
         # print("\n\nModel family :" + model_family)
         
         if model_family == "qwen2_5_vl":
-            model = Qwen2_5_VLForConditionalGeneration.from_pretrained(model_id, **kwargs)
+            self._MODEL_CACHE[cache_key] = Qwen2_5_VLForConditionalGeneration.from_pretrained(model_id, **kwargs)
         elif model_family == "qwen3_vl":
-            model = Qwen3VLForConditionalGeneration.from_pretrained(model_id, **kwargs)
+            self._MODEL_CACHE[cache_key] = Qwen3VLForConditionalGeneration.from_pretrained(model_id, **kwargs)
         
-        model.eval()
+        self._MODEL_CACHE[cache_key].eval()
 
-        self._MODEL_CACHE[cache_key] = model
-        return model
-
+        return self._MODEL_CACHE[cache_key]
+    
     def _generate_local(
         self,
         image_pil: Image.Image,
@@ -282,6 +277,7 @@ class QwenPromptFromImage:
         max_new_tokens: int,
         temperature: float,
         safe_quants: bool,
+        unload_model: bool,
     ) -> str:
         
         
@@ -359,6 +355,18 @@ class QwenPromptFromImage:
         else:
             reasoning = "No reasoning available for local inference with Instruct models. In case of seeing this with Thinking model, try increasing max_tokens."
             prompt = out_text
+
+        if unload_model:
+
+            for key in self._MODEL_CACHE:
+                self._MODEL_CACHE[key] = None
+            for key in self._PROC_CACHE:
+                 self._PROC_CACHE[key] = None
+            model = None
+            processor = None
+            inputs = None
+            # Not sure if I need to provide device id.
+            _cuda_cleanup(None)
 
         return _clean_single_line(prompt), reasoning
 
@@ -451,6 +459,7 @@ class QwenPromptFromImage:
         max_new_tokens,
         temperature,
         safe_quants,
+        unload_model,
         openai_base_url="http://127.0.0.1:11434",
         openai_api_key="",
         openai_model_override="",
@@ -481,6 +490,7 @@ class QwenPromptFromImage:
                 max_new_tokens=max_new_tokens,
                 temperature=temperature,
                 safe_quants=safe_quants,
+                unload_model=unload_model
             )
         # print(prompt,reasoning)
 

@@ -38,6 +38,7 @@ Optionally, "Preview as Text" nodes can be used to observe the thinking process 
 | max_new_tokens        | Maximum amount of new tokens to be generated                     | INT (max 8192)               |
 | temperature           | Temperature                                                      | FLOAT 0.0 - 1.0              |
 | safe_quants           | Keeps safe quantization methods for different devices            | Bool                         |
+| unload_model          | Unloads model when generation is compoleted                      | Bool                         |
 | openai_base_url       | OpenAI endpoint                                                  | http://127.0.0.1:11434       |
 | openai_api_key        | OpenAI token                                                     | text                         |
 | openai_model_override | Model to use by OpenAI endpoint. For example: qwen3-vl:7b        | text                         |
@@ -101,7 +102,7 @@ In a separate terminal, run:
 In multi-host environments, it's possible to run Ollama on a remote machine. You may want to take advantage of quantized models or custom models (for example: llava).
 
 Scenario constrains:  
-- ComfuUI runs on a different machine than Ollama
+- ComfyUI runs on a different machine than Ollama
 
 ### Start Ollama server and expose to the local network
 
