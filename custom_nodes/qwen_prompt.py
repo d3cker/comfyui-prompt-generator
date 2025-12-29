@@ -111,6 +111,7 @@ class QwenPromptFromImage:
             "Qwen/Qwen2.5-VL-7B-Instruct",
             "Qwen/Qwen3-VL-2B-Instruct",
             "Qwen/Qwen3-VL-2B-Thinking",
+            "Qwen/Qwen3-VL-8B-Instruct",
             "Qwen/Qwen3-VL-8B-Thinking",
         )
 
