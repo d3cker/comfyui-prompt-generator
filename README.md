@@ -48,6 +48,7 @@ Supported local (tested) models:
 - Qwen/Qwen2.5-VL-7B-Instruct
 - Qwen/Qwen3-VL-2B-Instruct
 - Qwen/Qwen3-VL-2B-Thinking
+- Qwen/Qwen3-VL-8B-Instruct
 - Qwen/Qwen3-VL-8B-Thinking
 
 The list may be updated by altering the `model_list` variable. Note: this node does not support local MoE variants, any other custom Qwen2.5 / Qwen3 VL (Instruct/Thinking) model should work. 
@@ -62,7 +63,7 @@ The list may be updated by altering the `model_list` variable. Note: this node d
 *user_prompt* - user-defined output details, for example: "make sure the background is black".
 Please note that results may differ depending on the model and quantization method. 
 
-*openai_base_url* - Any OpenAI-compatible endpoint. Tested with Ollama. Allows you to distribute the workload to remote hosts. 
+*openai_base_url* - Any OpenAI-compatible endpoint. Allows you to distribute the workload to remote hosts. Tested with Ollama and llama.cpp.
 
 *openai_model_override* - The model name to load via the OpenAI backend. For example `qwen3-vl:7b`
 
@@ -123,3 +124,47 @@ In a separate terminal, run:
 - max_new_tokens: 2048
 - openai_base_url: http://IP_OF_OLLAMA_MACHINE:11434
 - openai_model_override: llava:7b
+
+
+## llama.cpp with custom GGUFs
+
+With OpenAI API it's possible to run quantized, larger models like Qwen3VL-32B-Instruct-Q8_0 (GGUF).
+Download Q8_0 GGUF (Qwen3VL-32B-Instruct-Q8_0.gguf) and mmproj FP16 (mmproj-Qwen3VL-32B-Instruct-F16.gguf) from https://huggingface.co/Qwen/Qwen3-VL-32B-Instruct-GGUF and save both files in othe same folder.
+
+## llama.cpp locally
+
+Scenario constrains: 
+- The rig contains two GPUs 
+- ComfyUI uses GPU0 for image generation
+- llama.cpp uses GPU1 and CPU for image recognition and prompt generation
+
+### Run llama.cpp server 
+```
+./llama-server -m /path/to/model/Qwen3VL-32B-Instruct-Q8_0.gguf --port 11434 -dev CUDA1 --jinja --ctx-size 30000 --top_p 0.95 --temp 1.0 --top-k 20 -n 1024 --mmproj /path/to/model/mmproj-Qwen3VL-32B-Instruct-F16.gguf
+```
+
+### Setup node
+
+- backend: openai_compatible
+- max_new_tokens: 2048
+- openai_base_url: http://127.0.0.1:11434
+- leave openai_model_override empty
+
+## llama.cpp remote
+
+Scenario constrains: 
+- The rig contains two GPUs 
+- ComfyUI uses GPU0 for image generation
+- llama.cpp uses GPU0 and GPU1 for image recognition and prompt generation
+
+### Run llama.cpp server 
+```
+./llama-server -m /path/to/model/Qwen3VL-32B-Instruct-Q8_0.gguf --port 11434 --host 0.0.0.0 -ngl 99 --ctx-size 30000 --top_p 0.95 --temp 1.0 --top-k 20 -n 1024 --mmproj /path/to/model/mmproj-Qwen3VL-32B-Instruct-F16.gguf
+```
+
+### Setup node
+
+- backend: openai_compatible
+- max_new_tokens: 2048
+- openai_base_url: http://IP_OF_LLAMACPP_MACHINE:11434
+- leave openai_model_override empty
