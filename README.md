@@ -128,7 +128,7 @@ In a separate terminal, run:
 
 ## llama.cpp with custom GGUFs
 
-With OpenAI API it's possible to run quantized, larger models like Qwen3VL-32B-Instruct-Q8_0 (GGUF).
+With llama.cpp and OpenAI API it's possible to run quantized, larger models like Qwen3VL-32B-Instruct-Q8_0 (GGUF).
 Download Q8_0 GGUF (Qwen3VL-32B-Instruct-Q8_0.gguf) and mmproj FP16 (mmproj-Qwen3VL-32B-Instruct-F16.gguf) from https://huggingface.co/Qwen/Qwen3-VL-32B-Instruct-GGUF and save both files in othe same folder.
 
 ## llama.cpp locally
