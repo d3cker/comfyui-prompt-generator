@@ -69,6 +69,12 @@ Please note that results may differ depending on the model and quantization meth
 
 *device* - allows you to choose a GPU from the list. By default, ComfyUI nodes tend to bind to GPU0. If multiple GPU devices are present, this parameter allows you to use a different one. This makes it possible to keep models in memory and run recognition and generation models independently on different devices. "cpu" value allows you to offload recognition and prompt generation tasks to the CPU, but it is much slower than the GPU. This makes sense with small, non-thinking models (Qwen/Qwen2.5-VL-3B-Instruct)
 
+## Environment variables
+
+**OPENROUTER_API_KEY** (optional) if set and endpoint url is *http://127.0.0.1:11434/* or *none*, default url switches to: *https://openrouter.ai/api*
+
+**OPENAI_API_KEY** (optional) used when *OPENROUTER_API_KEY* is missing and leaves URL intact
+
 ## Ollama Local
 
 On multi-GPU rigs, it's possible to run Ollama and bind it to a specific GPU or the CPU. You may want to take advantage of quantized models or custom models (for example: llava).

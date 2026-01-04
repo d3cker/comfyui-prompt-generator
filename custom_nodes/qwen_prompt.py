@@ -1,6 +1,7 @@
 import base64
 import json
 import re
+import os
 from io import BytesIO
 from typing import Dict, Tuple
 
@@ -253,6 +254,8 @@ class QwenPromptFromImage:
         # Make sure flash-atttn is installed 
         if flash_attention == "on":
             kwargs["attn_implementation"] = "flash_attention_2"
+            
+
         # print(kwargs)
         # Load
         # print("\n\nModel family :" + model_family)
@@ -468,6 +471,16 @@ class QwenPromptFromImage:
         image_pil = _tensor_image_to_pil(image)
 
         if backend == "openai_compatible":
+
+            if not openai_api_key or not openai_api_key.strip():
+                if "OPENROUTER_API_KEY" in os.environ:
+                    openai_api_key = os.environ.get("OPENROUTER_API_KEY", "")
+                    if openai_base_url in ("http://127.0.0.1:11434", "") or not openai_base_url.strip():
+                        openai_base_url = "https://openrouter.ai/api"
+                        
+                elif "OPENAI_API_KEY" in os.environ:
+                    openai_api_key = os.environ.get("OPENAI_API_KEY", "")
+                
             prompt, reasoning = self._generate_openai_compatible(
                 image_pil=image_pil,
                 model_id=qwen_model,
