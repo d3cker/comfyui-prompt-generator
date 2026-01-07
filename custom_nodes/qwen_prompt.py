@@ -154,6 +154,8 @@ class QwenPromptFromImage:
                 "openai_model_override": ("STRING", {"default": ""}),
                 # OpenRouter provider routing (comma-separated list, e.g. "Parasail" or "Alibaba, Parasail")
                 "openrouter_providers": ("STRING", {"default": ""}),
+                # Verbose output - print API response details to console
+                "verbose_output": ([True, False], {"default": True}),
             }
         }
 
@@ -390,6 +392,7 @@ class QwenPromptFromImage:
         max_new_tokens: int,
         temperature: float,
         providers: str = "",
+        verbose: bool = True,
     ) -> str:
         buf = BytesIO()
         image_pil.save(buf, format="PNG")
@@ -441,6 +444,26 @@ class QwenPromptFromImage:
 
         data = resp.json()
 
+        # Verbose output - formatted API response details
+        if verbose:
+            provider = data.get("provider", "unknown")
+            model = data.get("model", "unknown")
+            usage = data.get("usage", {})
+            prompt_tokens = usage.get("prompt_tokens", 0)
+            completion_tokens = usage.get("completion_tokens", 0)
+            total_tokens = usage.get("total_tokens", 0)
+            cost = usage.get("cost", 0)
+            cached_tokens = usage.get("prompt_tokens_details", {}).get("cached_tokens", 0)
+
+            print(f"\n┌─ Qwen API Response ─────────────────────────────")
+            print(f"│ Provider: {provider}")
+            print(f"│ Model: {model}")
+            print(f"│ Tokens: {prompt_tokens} prompt + {completion_tokens} completion = {total_tokens} total")
+            if cached_tokens > 0:
+                print(f"│ Cached: {cached_tokens} tokens")
+            print(f"│ Cost: ${cost:.6f}")
+            print(f"└─────────────────────────────────────────────────\n")
+
         reasoning = (
             data.get("choices", [{}])[0]
             .get("message", {})
@@ -479,6 +502,7 @@ class QwenPromptFromImage:
         openai_api_key="",
         openai_model_override="",
         openrouter_providers="",
+        verbose_output=True,
     ):
         image_pil = _tensor_image_to_pil(image)
 
@@ -504,6 +528,7 @@ class QwenPromptFromImage:
                 max_new_tokens=max_new_tokens,
                 temperature=temperature,
                 providers=openrouter_providers,
+                verbose=verbose_output,
             )
         else:
             prompt, reasoning = self._generate_local(
