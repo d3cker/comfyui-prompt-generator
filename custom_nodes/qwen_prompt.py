@@ -455,14 +455,25 @@ class QwenPromptFromImage:
             cost = usage.get("cost", 0)
             cached_tokens = usage.get("prompt_tokens_details", {}).get("cached_tokens", 0)
 
-            print(f"\n┌─ Qwen API Response ─────────────────────────────")
-            print(f"│ Provider: {provider}")
-            print(f"│ Model: {model}")
-            print(f"│ Tokens: {prompt_tokens} prompt + {completion_tokens} completion = {total_tokens} total")
+            # Build lines and calculate max width for proper box formatting
+            lines = [
+                f"Provider: {provider}",
+                f"Model: {model}",
+                f"Tokens: {prompt_tokens} prompt + {completion_tokens} completion = {total_tokens} total",
+            ]
             if cached_tokens > 0:
-                print(f"│ Cached: {cached_tokens} tokens")
-            print(f"│ Cost: ${cost:.6f}")
-            print(f"└─────────────────────────────────────────────────\n")
+                lines.append(f"Cached: {cached_tokens} tokens")
+            lines.append(f"Cost: ${cost:.6f}")
+
+            width = max(len(line) for line in lines) + 2
+            title = " Qwen API Response "
+            top_border = f"┌{title}{'─' * (width - len(title))}┐"
+            bottom_border = f"└{'─' * width}┘"
+
+            print(f"\n{top_border}")
+            for line in lines:
+                print(f"│ {line.ljust(width - 1)}│")
+            print(f"{bottom_border}\n")
 
         reasoning = (
             data.get("choices", [{}])[0]
