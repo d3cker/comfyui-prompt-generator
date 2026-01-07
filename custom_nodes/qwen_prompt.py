@@ -114,6 +114,8 @@ class QwenPromptFromImage:
             "Qwen/Qwen3-VL-2B-Thinking",
             "Qwen/Qwen3-VL-8B-Instruct",
             "Qwen/Qwen3-VL-8B-Thinking",
+            "Qwen/Qwen3-VL-235B-A22B-Instruct",
+            "Qwen/Qwen3-VL-235B-A22B-Thinking",
         )
 
         return {
@@ -150,6 +152,10 @@ class QwenPromptFromImage:
                 "openai_base_url": ("STRING", {"default": "http://127.0.0.1:11434"}),
                 "openai_api_key": ("STRING", {"default": ""}),
                 "openai_model_override": ("STRING", {"default": ""}),
+                # OpenRouter provider routing (comma-separated list, e.g. "Parasail" or "Alibaba, Parasail")
+                "openrouter_providers": ("STRING", {"default": ""}),
+                # Verbose output - print API response details to console
+                "verbose_output": ([True, False], {"default": True}),
             }
         }
 
@@ -385,6 +391,8 @@ class QwenPromptFromImage:
         user_prompt: str,
         max_new_tokens: int,
         temperature: float,
+        providers: str = "",
+        verbose: bool = True,
     ) -> str:
         buf = BytesIO()
         image_pil.save(buf, format="PNG")
@@ -419,8 +427,16 @@ class QwenPromptFromImage:
             # OpenAI uses max_tokens; many compatible servers accept it.
             "max_tokens": int(max_new_tokens),
         }
-        
-        #print("OpenAI payload:", payload)
+
+        # Add provider routing if specified (OpenRouter-specific)
+        # Allows forcing specific providers for performance optimization
+        if providers and providers.strip():
+            provider_list = [p.strip() for p in providers.split(",") if p.strip()]
+            if provider_list:
+                payload["provider"] = {
+                    "order": provider_list,
+                    "allow_fallbacks": False
+                }
 
         resp = requests.post(url, headers=headers, data=json.dumps(payload), timeout=600)
         if resp.status_code != 200:
@@ -428,7 +444,36 @@ class QwenPromptFromImage:
 
         data = resp.json()
 
-        print("OpenAI response content:", data)
+        # Verbose output - formatted API response details
+        if verbose:
+            provider = data.get("provider", "unknown")
+            model = data.get("model", "unknown")
+            usage = data.get("usage", {})
+            prompt_tokens = usage.get("prompt_tokens", 0)
+            completion_tokens = usage.get("completion_tokens", 0)
+            total_tokens = usage.get("total_tokens", 0)
+            cost = usage.get("cost", 0)
+            cached_tokens = usage.get("prompt_tokens_details", {}).get("cached_tokens", 0)
+
+            # Build lines and calculate max width for proper box formatting
+            lines = [
+                f"Provider: {provider}",
+                f"Model: {model}",
+                f"Tokens: {prompt_tokens} prompt + {completion_tokens} completion = {total_tokens} total",
+            ]
+            if cached_tokens > 0:
+                lines.append(f"Cached: {cached_tokens} tokens")
+            lines.append(f"Cost: ${cost:.6f}")
+
+            width = max(len(line) for line in lines) + 2
+            title = " Qwen API Response "
+            top_border = f"┌{title}{'─' * (width - len(title))}┐"
+            bottom_border = f"└{'─' * width}┘"
+
+            print(f"\n{top_border}")
+            for line in lines:
+                print(f"│ {line.ljust(width - 1)}│")
+            print(f"{bottom_border}\n")
 
         reasoning = (
             data.get("choices", [{}])[0]
@@ -467,6 +512,8 @@ class QwenPromptFromImage:
         openai_base_url="http://127.0.0.1:11434",
         openai_api_key="",
         openai_model_override="",
+        openrouter_providers="",
+        verbose_output=True,
     ):
         image_pil = _tensor_image_to_pil(image)
 
@@ -491,6 +538,8 @@ class QwenPromptFromImage:
                 user_prompt=user_prompt,
                 max_new_tokens=max_new_tokens,
                 temperature=temperature,
+                providers=openrouter_providers,
+                verbose=verbose_output,
             )
         else:
             prompt, reasoning = self._generate_local(
