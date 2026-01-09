@@ -4,7 +4,7 @@
 
 ## Description
 
-This node generates a prompt based on an image. It allows you to add extra instructions for generation. It supports **Local Qwen2.5-VL / Local Qwen3-VL (Instruct/Thinking) / OpenAI compatible endpoints**, multi-GPU setups and CPU fallback.
+This node generates a prompt based on an image. It allows you to add extra instructions for generation. It supports **Local Qwen2.5-VL / Local Qwen3-VL (Instruct/Thinking) / OpenAI compatible  / OpenRouter**, multi-GPU setups and CPU fallback.
 
 The purpose of this node is to achieve the effect: "I want an image similar to this". 
 
@@ -42,14 +42,20 @@ Optionally, "Preview as Text" nodes can be used to observe the thinking process 
 | openai_base_url       | OpenAI endpoint                                                  | http://127.0.0.1:11434       |
 | openai_api_key        | OpenAI token                                                     | text                         |
 | openai_model_override | Model to use by OpenAI endpoint. For example: qwen3-vl:7b        | text                         |
+| openarouter_providers | OpenRouter provider. Leave blank for auto or Ollama/llama.cpp.   | e.g., Parasail, Alibaba      |
+| verbose_output.      | OpenAI API response output                                        | Bool                         |
 
-Supported local (tested) models:
+Supported models (tested locally):
 - Qwen/Qwen2.5-VL-3B-Instruct
 - Qwen/Qwen2.5-VL-7B-Instruct
 - Qwen/Qwen3-VL-2B-Instruct
 - Qwen/Qwen3-VL-2B-Thinking
 - Qwen/Qwen3-VL-8B-Instruct
 - Qwen/Qwen3-VL-8B-Thinking
+
+Supported models (tested with OpenRouter)
+ - Qwen/Qwen3-VL-235B-A22B-Instruct
+ - Qwen/Qwen3-VL-235B-A22B-Thinking
 
 The list may be updated by altering the `model_list` variable. Note: this node does not support local MoE variants, any other custom Qwen2.5 / Qwen3 VL (Instruct/Thinking) model should work. 
 
@@ -73,7 +79,7 @@ Please note that results may differ depending on the model and quantization meth
 
 **OPENROUTER_API_KEY** (optional) if set and endpoint url is *http://127.0.0.1:11434/* or *none*, default url switches to: *https://openrouter.ai/api*
 
-**OPENAI_API_KEY** (optional) used when *OPENROUTER_API_KEY* is missing and leaves URL intact
+**OPENAI_API_KEY** (optional) used when *OPENROUTER_API_KEY* ismissing and leaves URL intact.
 
 ## Ollama Local
 

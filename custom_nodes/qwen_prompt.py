@@ -466,7 +466,7 @@ class QwenPromptFromImage:
             lines.append(f"Cost: ${cost:.6f}")
 
             width = max(len(line) for line in lines) + 2
-            title = " Qwen API Response "
+            title = " OpenAI API Response "
             top_border = f"┌{title}{'─' * (width - len(title))}┐"
             bottom_border = f"└{'─' * width}┘"
 
